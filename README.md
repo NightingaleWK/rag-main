@@ -1,95 +1,160 @@
-# 本地化RAG知识库服务
+# 本地知识库RAG服务
 
-这是一个基于本地模型的RAG (Retrieval Augmented Generation) 知识库服务，使用FastAPI提供API接口。
+这是一个基于FastAPI的本地知识库问答系统，使用RAG（检索增强生成）技术实现。系统支持多种文档格式，使用本地LLM模型进行问答，并提供RESTful API接口。
 
 ## 功能特点
 
-- 使用本地化的大语言模型，无需依赖云服务
-- 支持知识库的建立、查询和管理
-- 基于向量检索的相关文档获取
-- 提供简洁的RESTful API接口
+- 支持多种文档格式：PDF、TXT、DOCX、HTML等
+- 使用本地LLM模型（默认使用通义千问2.5-7B）
+- 支持GPU加速（可选）
+- 支持Chroma和FAISS两种向量存储
+- 提供RESTful API接口
+- 支持动态添加和更新文档
+- 支持中文问答
 
-## 技术栈
+## 系统要求
 
-- FastAPI: 提供高性能API服务
-- LangChain: 构建RAG检索增强生成系统
-- llama-cpp-python: 本地运行LLM模型
-- FAISS: 高效的向量存储和检索
-- Sentence Transformers: 文本向量化
+- Python 3.8+
+- CUDA支持（可选，用于GPU加速）
+- 至少8GB内存（推荐16GB以上）
+- 足够的磁盘空间用于存储向量数据库和模型文件
 
-## 目录结构
+## 安装步骤
 
-```
-rag-fastapi-service/
-├── data/                 # 知识库文档目录
-├── models/               # 模型存储目录
-├── faiss_index/          # 向量索引存储目录（自动创建）
-├── main.py               # FastAPI服务入口
-├── rag_core.py           # RAG核心逻辑
-├── .env                  # 环境变量配置
-└── requirements.txt      # 项目依赖
-```
-
-## 安装
-
-1. 克隆仓库并安装依赖：
-
+1. 克隆项目并进入项目目录：
 ```bash
-git clone https://github.com/yourusername/rag-fastapi-service.git
+git clone [项目地址]
 cd rag-fastapi-service
+```
+
+2. 创建并激活虚拟环境：
+```bash
+python -m venv rag-venv
+# Windows
+.\rag-venv\Scripts\activate
+# Linux/Mac
+source rag-venv/bin/activate
+```
+
+3. 安装依赖：
+```bash
 pip install -r requirements.txt
 ```
 
-2. 下载模型并放入models目录
+4. 下载模型文件：
+- 将通义千问2.5-7B模型文件（GGUF格式）放入`models`目录
+- 默认模型路径：`models/qwen2.5-7b-instruct-q4_k_m.gguf`
 
-您需要下载与llama.cpp兼容的GGUF格式的模型文件，例如Chinese-Llama-2等，并将其放入models目录中。
+5. 准备文档：
+- 将需要索引的文档放入`data`目录
+- 支持的文档格式：PDF、TXT、DOCX、HTML等
 
-## 使用方法
+## 配置说明
 
-1. 启动服务：
+在`.env`文件中配置系统参数：
+
+```env
+# 模型配置
+MODEL_PATH=models/qwen2.5-7b-instruct-q4_k_m.gguf
+MODEL_TYPE=llama
+CONTEXT_LENGTH=4096
+GPU_LAYERS=0
+
+# 向量数据库配置
+VECTOR_DB_TYPE=chroma  # 可选: faiss, chroma
+VECTOR_DB_PATH=vector_store
+
+# 文档处理配置
+CHUNK_SIZE=500
+CHUNK_OVERLAP=50
+
+# 向量化模型配置
+EMBEDDINGS_MODEL=moka-ai/m3e-base
+
+# GPU配置
+USE_GPU=True
+
+# 服务配置
+PORT=8000
+HOST=0.0.0.0
+
+# 数据配置
+DOCS_DIR=data
+```
+
+## 启动服务
 
 ```bash
 python main.py
 ```
 
-2. 初始化系统（第一次使用或更新知识库时）：
+服务将在 http://localhost:8000 启动
 
-```bash
-curl -X POST "http://localhost:8000/initialize" -H "Content-Type: application/json" -d '{"rebuild_vector_store": true}'
+## API接口
+
+### 1. 初始化系统
+```http
+POST /initialize
+Content-Type: application/json
+
+{
+    "rebuild_vector_store": false,
+    "model_path": "models/qwen2.5-7b-instruct-q4_k_m.gguf",
+    "embeddings_model": "moka-ai/m3e-base",
+    "vector_store_type": "chroma",
+    "use_gpu": true,
+    "gpu_layers": 0
+}
 ```
 
-3. 查询知识库：
+### 2. 查询接口
+```http
+POST /query
+Content-Type: application/json
 
-```bash
-curl -X POST "http://localhost:8000/query" -H "Content-Type: application/json" -d '{"query": "什么是人工智能?"}'
+{
+    "query": "你的问题"
+}
 ```
 
-## API文档
+### 3. 刷新向量存储
+```http
+POST /refresh
+```
 
-启动服务后，访问 http://localhost:8000/docs 查看完整的API文档。
+### 4. 添加新文档
+```http
+POST /add_documents
+Content-Type: application/json
 
-主要接口：
+{
+    "file_paths": ["data/new_doc.pdf"]
+}
+```
 
-- `POST /initialize`: 初始化或重新初始化系统
-- `GET /status`: 获取系统状态
-- `POST /query`: 查询知识库
-- `GET /health`: 健康检查
+### 5. 系统状态查询
+```http
+GET /status
+```
 
-## 配置
+### 6. 健康检查
+```http
+GET /health
+```
 
-在`.env`文件中可配置以下参数：
+## 注意事项
 
-- `MODEL_PATH`: 模型文件路径
-- `EMBEDDINGS_MODEL`: 向量嵌入模型
-- `PORT`: 服务端口
-- `HOST`: 服务地址
-- `DOCS_DIR`: 知识库文档目录
+1. 首次使用需要下载模型文件，请确保有足够的磁盘空间
+2. 使用GPU加速需要安装CUDA和相应的PyTorch版本
+3. 文档处理过程中会占用较大内存，请确保系统有足够的内存
+4. 向量数据库会占用较大磁盘空间，请确保有足够的存储空间
 
-## 知识库管理
+## 常见问题
 
-1. 将您的文本文档（.txt格式）放入`data`目录
-2. 重新初始化系统以更新知识库
+1. 如果遇到内存不足，可以调整`CHUNK_SIZE`和`CHUNK_OVERLAP`参数
+2. 如果GPU内存不足，可以调整`GPU_LAYERS`参数
+3. 如果向量检索效果不理想，可以调整`CHUNK_SIZE`和`CHUNK_OVERLAP`参数
 
 ## 许可证
 
-MIT 
+MIT License 
