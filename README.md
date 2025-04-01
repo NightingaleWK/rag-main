@@ -43,41 +43,41 @@ pip install -r requirements.txt
 
 4. 下载并合并模型文件：
 
-### 4.1 下载模型文件
-从 [Hugging Face](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/tree/main) 下载以下文件：
-- qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf
-- qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf
+   4.1. 下载模型文件
+   从 [Hugging Face](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/tree/main) 下载以下文件：
+   - qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf
+   - qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf
 
-### 4.2 编译安装 llama.cpp
-```bash
-# 克隆 llama.cpp 仓库
-git clone https://github.com/ggerganov/llama.cpp.git
-cd llama.cpp
+   4.2. 编译安装 llama.cpp
+   ```bash
+   # 克隆 llama.cpp 仓库
+   git clone https://github.com/ggerganov/llama.cpp.git
+   cd llama.cpp
 
-# 编译
-# Windows (使用 Visual Studio)
-cmake -B build
-cmake --build build --config Release
+   # 编译
+   # Windows (使用 Visual Studio)
+   cmake -B build
+   cmake --build build --config Release
 
-# Linux/Mac
-make
-```
+   # Linux/Mac
+   make
+   ```
 
-### 4.3 合并模型文件
-```bash
-# 进入 llama.cpp 目录
-cd llama.cpp
+   4.3. 合并模型文件
+   ```bash
+   # 进入 llama.cpp 目录
+   cd llama.cpp
 
-# 合并模型文件
-./build/bin/Release/llama-gguf.exe -m qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf -m qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf -o qwen2.5-7b-instruct-q4_k_m.gguf
+   # 合并模型文件
+   ./build/bin/Release/llama-gguf.exe -m qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf -m qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf -o qwen2.5-7b-instruct-q4_k_m.gguf
 
-# 将合并后的模型文件移动到项目的 models 目录
-mv qwen2.5-7b-instruct-q4_k_m.gguf ../models/
-```
+   # 将合并后的模型文件移动到项目的 models 目录
+   mv qwen2.5-7b-instruct-q4_k_m.gguf ../models/
+   ```
 
 5. 准备文档：
-- 将需要索引的文档放入`data`目录
-- 支持的文档格式：PDF、TXT、DOCX、HTML等
+   - 将需要索引的文档放入`data`目录
+   - 支持的文档格式：PDF、TXT、DOCX、HTML等
 
 ## 配置说明
 
